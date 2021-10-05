@@ -1,38 +1,52 @@
-﻿using System;
-
-namespace TestConsole
+﻿namespace TestConsole
 {
-    using System.Collections;
+    using System;
     using System.Collections.Generic;
-    using System.Net.Http;
+    using BenchmarkDotNet.Attributes;
+    using BenchmarkDotNet.Order;
+    using BenchmarkDotNet.Running;
+    using Services;
 
     class Program
     {
-
         static void Main()
         {
-            var str = "wtf man";
-            int intValue;
-            Structure a = new Structure();
-            object ob = str;
-            Console.WriteLine(ob.ToString());
-
-            Console.ReadLine();
+            BenchmarkRunner.Run<StorageBenchmark>();
         }
     }
 
-    public ref struct Structure
+    [MemoryDiagnoser]
+    [Orderer(SummaryOrderPolicy.FastestToSlowest)]
+    [RankColumn]
+    public class StorageBenchmark
     {
-        public int _a;
+        private List<ChatDto> Chats = new List<ChatDto>(10_000_000);
+        // public ChatsStorage ChatsStorage = new ChatsStorage(default);
+        private UserChatsStorage UserChatsStorage = new UserChatsStorage();
 
-        public Structure(int a)
+        public StorageBenchmark()
         {
-            _a = a;
-        }
-    }
+            var rnd = new Random();
 
-    public abstract class AbstractClass
-    {
-        
+            for (var i = 0; i < 10_000_000; i++)
+            {
+                Chats.Add(new ChatDto(
+                    rnd.Next(10_000_000),
+                    rnd.Next(10_000_000),
+                    rnd.Next(10_000_000)));
+            }
+        }
+
+        [Benchmark]
+        public void InitializeVoidBenchmark()
+        {
+            UserChatsStorage.InitializeVoid(Chats);
+        }
+
+        [Benchmark]
+        public void InitializeBoolBenchmark()
+        {
+            UserChatsStorage.InitializeBool(Chats);
+        }
     }
 }
