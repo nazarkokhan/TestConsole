@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using BenchmarkDotNet.Attributes;
     using BenchmarkDotNet.Order;
     using BenchmarkDotNet.Running;
@@ -20,33 +21,28 @@
     [RankColumn]
     public class StorageBenchmark
     {
-        private List<ChatDto> Chats = new List<ChatDto>(10_000_000);
-        // public ChatsStorage ChatsStorage = new ChatsStorage(default);
-        private UserChatsStorage UserChatsStorage = new UserChatsStorage();
-
-        public StorageBenchmark()
-        {
-            var rnd = new Random();
-
-            for (var i = 0; i < 10_000_000; i++)
-            {
-                Chats.Add(new ChatDto(
-                    rnd.Next(10_000_000),
-                    rnd.Next(10_000_000),
-                    rnd.Next(10_000_000)));
-            }
-        }
+        private static readonly Random rnd = new();
+        private static List<ChatDto> Chats = Enumerable
+            .Range(1, 1_000)
+            .Select(_ => new ChatDto(
+                rnd.Next(1_000),
+                rnd.Next(1_000),
+                rnd.Next(1_000)))
+            .ToList();
+        
+        private static UserChatsStorage UserChatsStorage1 = new();
+        private static UserChatsStorage UserChatsStorage2 = new();
 
         [Benchmark]
         public void InitializeVoidBenchmark()
         {
-            UserChatsStorage.InitializeVoid(Chats);
+            UserChatsStorage1.InitializeVoid(Chats);
         }
 
         [Benchmark]
         public void InitializeBoolBenchmark()
         {
-            UserChatsStorage.InitializeBool(Chats);
+            UserChatsStorage2.InitializeBool(Chats);
         }
     }
 }
